@@ -13,25 +13,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest, windows-11-arm]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel]
     steps:
       - uses: actions/checkout@v7
       - id: setup
         uses: ./setup
-      - shell: bash
-        env:
+      - env:
           VERSION: ${{ steps.setup.outputs.gperl-version }}
-        run: test -n "$VERSION" && test "$(gperl run -e 'print "ok"')" = ok
-
-  modules:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel]
-    steps:
-      - uses: actions/checkout@v7
-      - uses: ./setup
+        run: test -n "$VERSION"
       - working-directory: testdata/app
         run: gperl test
       - working-directory: testdata/app

@@ -22,7 +22,7 @@ steps:
 |---|---|---|
 | `gperl-version` | `latest` | The release to install, as a tag (`v0.3.4`, or `0.3.4`) or `latest`. |
 | `cache` | `true` | Cache the module directory (`GPERLMODCACHE` as an absolute path, default `~/gperl/pkg/mod`), keyed by the runner's platform, the gperl release and the hash of every `cpanfile` and `cpanfile.snapshot`. |
-| `install-toolchain` | `false` | Run `gperl install toolchain`, which installs the Go and Zig toolchains gperl builds binaries and native modules with into `GPERLTOOLCHAIN` (as an absolute path, default `~/gperl/toolchain`), and cache them. gperl pins them only for Linux and macOS: on Windows this fails. |
+| `install-toolchain` | `false` | Run `gperl install toolchain`, which installs the Go and Zig toolchains gperl builds binaries and native modules with into `GPERLTOOLCHAIN` (as an absolute path, default `~/gperl/toolchain`), and cache them. |
 | `token` | `${{ github.token }}` | The token that downloads the release and verifies its build provenance. |
 
 ### Outputs
@@ -45,5 +45,5 @@ steps:
 
 ### Runners
 
-gperl installs on Linux, macOS and Windows runners, on x64 and ARM64.
+Linux and macOS runners, on x64 and ARM64.
 Dependencies that build with `Makefile.PL` also need `make` on the runner.

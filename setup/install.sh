@@ -10,9 +10,8 @@ repo=goccy/go-perl
 case "$RUNNER_OS" in
 Linux) os=linux ;;
 macOS) os=darwin ;;
-Windows) os=windows ;;
 *)
-	echo "::error::gperl has no release for $RUNNER_OS"
+	echo "::error::setup supports Linux and macOS runners, not $RUNNER_OS"
 	exit 1
 	;;
 esac
@@ -30,11 +29,7 @@ if [ "$GPERL_VERSION" = latest ]; then
 else
 	tag=v${GPERL_VERSION#v}
 fi
-ext=tar.gz
-if [ "$os" = windows ]; then
-	ext=zip
-fi
-asset=gperl_${tag}_${os}_${arch}.$ext
+asset=gperl_${tag}_${os}_${arch}.tar.gz
 
 work=$(mktemp -d "$RUNNER_TEMP/gperl.XXXXXX")
 gh release download "$tag" --repo "$repo" --dir "$work" --pattern "$asset" --pattern checksums.txt
@@ -53,12 +48,7 @@ fi
 dest=$RUNNER_TOOL_CACHE/gperl/${tag#v}/$arch
 rm -rf "$dest"
 mkdir -p "$dest"
-if [ "$os" = windows ]; then
-	dest=$(cygpath -w "$dest")
-	powershell -NoProfile -Command "Expand-Archive -LiteralPath '$(cygpath -w "$work/$asset")' -DestinationPath '$dest'"
-else
-	tar -xzf "$work/$asset" -C "$dest"
-fi
+tar -xzf "$work/$asset" -C "$dest"
 rm -rf "$work"
 
 echo "$dest" >>"$GITHUB_PATH"
