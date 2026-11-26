@@ -1,0 +1,56 @@
+name: Test
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel]
+    steps:
+      - uses: actions/checkout@v7
+      - id: setup
+        uses: ./setup
+      - env:
+          VERSION: ${{ steps.setup.outputs.gperl-version }}
+        run: test -n "$VERSION"
+      - working-directory: testdata/app
+        run: gperl test
+      - working-directory: testdata/app
+        run: test "$(gperl run hello.pl)" = "hello from gperl"
+
+  pinned:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - id: setup
+        uses: ./setup
+        with:
+          gperl-version: 0.3.4
+          cache: false
+      - env:
+          VERSION: ${{ steps.setup.outputs.gperl-version }}
+          CACHE_HIT: ${{ steps.setup.outputs.cache-hit }}
+        run: test "$VERSION" = v0.3.4 && test -z "$CACHE_HIT"
+
+  toolchain:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./setup
+        with:
+          install-toolchain: true
+      - run: ls -d ~/gperl/toolchain/go-* ~/gperl/toolchain/zig-*
+      - working-directory: testdata/app
+        run: gperl build -o hello hello.pl && test "$(./hello)" = "hello from gperl"

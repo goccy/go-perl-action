@@ -1,0 +1,56 @@
+name: Setup gperl
+description: Install gperl, the go-perl command, and cache the CPAN modules it builds
+author: goccy
+branding:
+  icon: package
+  color: blue
+
+inputs:
+  gperl-version:
+    description: The gperl release to install, as a tag (v0.3.4) or latest.
+    default: latest
+  cache:
+    description: Cache the module directory, keyed by the gperl release and the hash of every cpanfile and cpanfile.snapshot.
+    default: "true"
+  install-toolchain:
+    description: Install the Go and Zig toolchains gperl builds binaries and native modules with (gperl install toolchain), and cache them.
+    default: "false"
+  token:
+    description: The token that downloads the release and verifies its build provenance.
+    default: ${{ github.token }}
+
+outputs:
+  gperl-version:
+    description: The tag of the installed gperl release.
+    value: ${{ steps.install.outputs.gperl-version }}
+  cache-hit:
+    description: Whether the module directory was restored from a cache of the same key.
+    value: ${{ steps.modules.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+    - id: install
+      shell: bash
+      env:
+        GPERL_VERSION: ${{ inputs.gperl-version }}
+        GH_TOKEN: ${{ inputs.token }}
+      run: bash "$GITHUB_ACTION_PATH/install.sh"
+
+    - id: modules
+      if: inputs.cache == 'true'
+      uses: actions/cache@v6
+      with:
+        path: ${{ env.GPERLMODCACHE || '~/gperl/pkg/mod' }}
+        key: gperl-mod-${{ runner.os }}-${{ runner.arch }}-${{ steps.install.outputs.gperl-version }}-${{ hashFiles('**/cpanfile', '**/cpanfile.snapshot') }}
+        restore-keys: gperl-mod-${{ runner.os }}-${{ runner.arch }}-${{ steps.install.outputs.gperl-version }}-
+
+    - if: inputs.install-toolchain == 'true'
+      uses: actions/cache@v6
+      with:
+        path: ${{ env.GPERLTOOLCHAIN || '~/gperl/toolchain' }}
+        key: gperl-toolchain-${{ runner.os }}-${{ runner.arch }}-${{ steps.install.outputs.gperl-version }}
+
+    - if: inputs.install-toolchain == 'true'
+      shell: bash
+      run: gperl install toolchain
